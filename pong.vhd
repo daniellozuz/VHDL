@@ -34,7 +34,7 @@ architecture Behavioral of costam is
 begin
 
 
-	Inst_clock25: entity work.clock25 
+	Inst_clock25: entity work.clock25
 	port map (
 		CLKIN_IN => CLK,
 		CLKDV_OUT => clk25,
@@ -47,7 +47,7 @@ begin
 	generate_vsync : process (clk25)
 		variable cntv : integer := 0;
 	begin
-  
+
 		if rising_edge(clk25) then
 			if cntv < 1600 then
 				vs <= '0';
@@ -58,39 +58,39 @@ begin
 			if cntv = 416800 then
 				cntv := 0;
 			end if;
-			
+
 			cntv := cntv + 1;
 		end if;
-    
+
 	end process generate_vsync;
-	
+
 
 	generate_hsync : process (clk25)
 		variable cnth : integer := 0;
 	begin
-  
+
 		if rising_edge(clk25) then
 			if cnth < 96 then
 				hs <= '0';
 			else
 				hs <= '1';
 			end if;
-			
+
 			if cnth = 800 then
 				cnth := 0;
 			end if;
-			
+
 			cnth := cnth + 1;
 		end if;
-    
+
 	end process generate_hsync;
-	
+
 
   pixel : process (hs)
     variable pix_x : integer := 0;
     variable pix_y : integer := 0;
   begin
-  
+
     if rising_edge(hs) then
       pix_x := (pix_x + 1) mod 640;
       if pix_x = 0 then
@@ -100,7 +100,7 @@ begin
       px <= pix_x;
       py <= pix_y;
     end if;
-    
+
   end process pixel;
 
 
@@ -116,21 +116,21 @@ begin
     if P1DOWN = '1' then
       pad1Top := pad1Top + 1;
     end if;
-  
+
     for i in 0 to 47 loop
       screen(5, i) <= '1' when (i > pad1Top and i <= pad1Top + pad1Len) else '0';
     end loop;
-    
+
     wait for 100 ms;
-    
+
   end process draw_paddle1;
 
 
   display : process (clk25)
 	begin
-  
+
 		if (rising_edge(clk25)) then
-			if hs = '1' and vs = '1' then 
+			if hs = '1' and vs = '1' then
 				-- display appropriate pixel (coordinates px/10, py/10 of array screen)
         if screen(px/10, py/10) = '1' then
   				VGA_R <= "1111";
@@ -147,11 +147,11 @@ begin
 				VGA_G <= "0000";
 				VGA_B <= "0000";
 			end if;
-			
+
 			HSYNC <= hs;
 			VSYNC <= vs;
 		end if;
-    
+
 	end process display;
 
 
