@@ -93,7 +93,7 @@ begin
 
   pixel : process (cnth, cntv)
 	begin
-		px <= cnth - 140;
+		px <= cnth - 144;
 		
 		if rising_edge(hs) then
 			if py = 639 then
