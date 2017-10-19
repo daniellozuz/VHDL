@@ -6,19 +6,19 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity main is
     Port (	CLK_50MHz : in STD_LOGIC;
-		    Switch    : in STD_LOGIC_VECTOR( 3 downto 0 );
-			LED       : out STD_LOGIC_VECTOR( 7 downto 0 );
-			Enc1_A    : in STD_LOGIC;
-			Enc1_B    : in STD_LOGIC;
-			Enc2_A    : in STD_LOGIC;
-			Enc2_B    : in STD_LOGIC;
-			BTN_EAST  : inout STD_LOGIC;
-			BTN_NORTH : inout STD_LOGIC;
-			BTN_SOUTH : inout STD_LOGIC;
-			BTN_WEST  : inout STD_LOGIC;
-			Dir       : out STD_LOGIC;
-			Break     : out STD_LOGIC;
-			PWM       : out STD_LOGIC );
+            Switch    : in STD_LOGIC_VECTOR( 3 downto 0 );
+            LED       : out STD_LOGIC_VECTOR( 7 downto 0 );
+            Enc1_A    : in STD_LOGIC;
+            Enc1_B    : in STD_LOGIC;
+            Enc2_A    : in STD_LOGIC;
+            Enc2_B    : in STD_LOGIC;
+            BTN_EAST  : inout STD_LOGIC;
+            BTN_NORTH : inout STD_LOGIC;
+            BTN_SOUTH : inout STD_LOGIC;
+            BTN_WEST  : inout STD_LOGIC;
+            Dir       : out STD_LOGIC;
+            Break     : out STD_LOGIC;
+            PWM       : out STD_LOGIC );
 end main;
 
 
@@ -44,35 +44,35 @@ begin
     if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
         Old_BTN_EAST <= BTN_EAST;
         if ( BTN_EAST = '1' and Old_BTN_EAST = '0' ) then
-			rising_edge_BTN_EAST<='1';
-		else
-			rising_edge_BTN_EAST<='0';
-		end if;
-		Old_BTN_NORTH <= BTN_NORTH;
+            rising_edge_BTN_EAST<='1';
+        else
+            rising_edge_BTN_EAST<='0';
+        end if;
+        Old_BTN_NORTH <= BTN_NORTH;
         if ( BTN_NORTH = '1' and Old_BTN_NORTH = '0' ) then
-			rising_edge_BTN_NORTH <= '1';
-		else
-			rising_edge_BTN_NORTH <= '0';
-		end if;
-	end if;
+            rising_edge_BTN_NORTH <= '1';
+        else
+            rising_edge_BTN_NORTH <= '0';
+        end if;
+    end if;
 end process edge_detection; 
 
 
 dir_break_proc: process ( CLK_50MHZ )
 begin
     if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-		Dir <= Switch(0);
-		Break <= Switch(1);
-	end if;
+        Dir <= Switch(0);
+        Break <= Switch(1);
+    end if;
 end process dir_break_proc;
 
 
 -- Przykladowy proces umozliwiajacy kompilacje projektu
 LED_Proc: process ( CLK_50MHZ )
 begin
-	if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-		LED <= Switch & Switch;
-	end if;
+    if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
+        LED <= Switch & Switch;
+    end if;
 end process LED_Proc;
 
 
@@ -81,17 +81,17 @@ begin
     if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
         case Switch( 3 downto 2 ) is  
             when "00" =>  
-	            new_prescalerFreg := 10000;
-	            new_prescalerPWM := 2;
+                new_prescalerFreg := 10000;
+                new_prescalerPWM := 2;
             when "01" => 
-  	            new_prescalerFreg := 5000;
-	            new_prescalerPWM := 4;
+                  new_prescalerFreg := 5000;
+                new_prescalerPWM := 4;
             when "10" =>
-	            new_prescalerFreg := 3500;
-	            new_prescalerPWM := 6;
+                new_prescalerFreg := 3500;
+                new_prescalerPWM := 6;
             when others => 
-	            new_prescalerFreg := 2500;
-	            new_prescalerPWM := 8;
+                new_prescalerFreg := 2500;
+                new_prescalerPWM := 8;
         end case;
     end if;
 end process prescal;
@@ -100,19 +100,19 @@ end process prescal;
 PWM_Proc: process ( CLK_50MHZ )
     variable counterPWM : INTEGER;
 begin
-	if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-		counterPWM := counterPWM + 1;
-		if counterPWM=1 then
-			PWM <= '1';
-		end if;
-		if counterPWM = actual_prescalerFreg * 100 / actual_prescalerPWM then 
-			PWM <= '0';
-		end if;
-		if counterPWM = actual_prescalerFreg then
-			PWM <= '1';
-			counterPWM := 0;
-		end if;
-	end if;
+    if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
+        counterPWM := counterPWM + 1;
+        if counterPWM=1 then
+            PWM <= '1';
+        end if;
+        if counterPWM = actual_prescalerFreg * 100 / actual_prescalerPWM then 
+            PWM <= '0';
+        end if;
+        if counterPWM = actual_prescalerFreg then
+            PWM <= '1';
+            counterPWM := 0;
+        end if;
+    end if;
 end process PWM_Proc;
 
 
@@ -120,58 +120,58 @@ change_presc_Proc: process ( CLK_50MHZ )
     variable counterFregChange : INTEGER;
     variable counterPWMChange  : INTEGER;
 begin
-	if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-		Old_BTN_SOUTH <= BTN_SOUTH;
+    if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
+        Old_BTN_SOUTH <= BTN_SOUTH;
         if ( BTN_SOUTH = '1' and Old_BTN_SOUTH = '0' ) then
-			Set_Freg <= '1';
-		end if;
-		Old_BTN_WEST <= BTN_WEST;
+            Set_Freg <= '1';
+        end if;
+        Old_BTN_WEST <= BTN_WEST;
         if ( BTN_WEST = '1' and Old_BTN_WEST = '0' ) then
-			Set_PWM <= '1';
-		end if;
-		if Set_Freg = '1' then
-			if actual_prescalerFreg < new_prescalerFreg then
-				counterFregChange := counterFregChange + 1;
-				if counterFregChange = 1 then
-					actual_prescalerFreg := actual_prescalerFreg + 500;
-				end if;
-				if counterFregChange = 50000000 then
-					counterFregChange := 0;
-				end if;
-			elsif actual_prescalerFreg > new_prescalerFreg then
-				counterFregChange := counterFregChange+1;
-				if counterFregChange = 1 then
-					actual_prescalerFreg := actual_prescalerFreg - 500;
-				end if;
-				if counterFregChange = 50000000 then
-				    counterFregChange := 0;
-				end if;
-			else
-				Set_Freg <= '0';
-			end if;
-		end if;
-		if ( Set_PWM = '1' and Set_Freg = '0' ) then
-			if actual_prescalerPWM < new_prescalerPWM then
-				counterPWMChange := counterPWMChange + 1;
-				if counterPWMChange = 1 then
-					actual_prescalerPWM := actual_prescalerPWM+2;
-				end if;
-				if counterPWMChange = 50000000 then
-					counterPWMChange := 0;
-				end if;
-			elsif actual_prescalerPWM > new_prescalerPWM then
-				counterPWMChange := counterPWMChange + 1;
-				if counterPWMChange = 1 then
-					actual_prescalerPWM := actual_prescalerPWM - 2;
-				end if;
-				if counterPWMChange = 50000000 then
-					counterPWMChange := 0;	
-				end if;
-			else
-				Set_Freg <= '0';
-			end if;
-		end if;
-	end if;
+            Set_PWM <= '1';
+        end if;
+        if Set_Freg = '1' then
+            if actual_prescalerFreg < new_prescalerFreg then
+                counterFregChange := counterFregChange + 1;
+                if counterFregChange = 1 then
+                    actual_prescalerFreg := actual_prescalerFreg + 500;
+                end if;
+                if counterFregChange = 50000000 then
+                    counterFregChange := 0;
+                end if;
+            elsif actual_prescalerFreg > new_prescalerFreg then
+                counterFregChange := counterFregChange+1;
+                if counterFregChange = 1 then
+                    actual_prescalerFreg := actual_prescalerFreg - 500;
+                end if;
+                if counterFregChange = 50000000 then
+                    counterFregChange := 0;
+                end if;
+            else
+                Set_Freg <= '0';
+            end if;
+        end if;
+        if ( Set_PWM = '1' and Set_Freg = '0' ) then
+            if actual_prescalerPWM < new_prescalerPWM then
+                counterPWMChange := counterPWMChange + 1;
+                if counterPWMChange = 1 then
+                    actual_prescalerPWM := actual_prescalerPWM+2;
+                end if;
+                if counterPWMChange = 50000000 then
+                    counterPWMChange := 0;
+                end if;
+            elsif actual_prescalerPWM > new_prescalerPWM then
+                counterPWMChange := counterPWMChange + 1;
+                if counterPWMChange = 1 then
+                    actual_prescalerPWM := actual_prescalerPWM - 2;
+                end if;
+                if counterPWMChange = 50000000 then
+                    counterPWMChange := 0;	
+                end if;
+            else
+                Set_Freg <= '0';
+            end if;
+        end if;
+    end if;
 end process change_presc_Proc;
 
 
