@@ -6,8 +6,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity main is
     Port (  CLK_50MHz : in STD_LOGIC;
-            Switch    : in STD_LOGIC_VECTOR( 3 downto 0 );
-            LED       : out STD_LOGIC_VECTOR( 7 downto 0 );
+            Switch    : in STD_LOGIC_VECTOR ( 3 downto 0 );
+            LED       : out STD_LOGIC_VECTOR ( 7 downto 0 );
             Enc1_A    : in STD_LOGIC;
             Enc1_B    : in STD_LOGIC;
             Enc2_A    : in STD_LOGIC;
@@ -44,9 +44,9 @@ begin
     if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
         old_BTN_EAST <= BTN_EAST;
         if ( BTN_EAST = '1' and old_BTN_EAST = '0' ) then
-            rising_edge_BTN_EAST<='1';
+            rising_edge_BTN_EAST <= '1';
         else
-            rising_edge_BTN_EAST<='0';
+            rising_edge_BTN_EAST <= '0';
         end if;
         old_BTN_NORTH <= BTN_NORTH;
         if ( BTN_NORTH = '1' and old_BTN_NORTH = '0' ) then
