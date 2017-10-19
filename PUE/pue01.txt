@@ -29,8 +29,8 @@ architecture Behavioral of main is
     signal old_BTN_WEST			 : std_logic;
     signal rising_edge_BTN_EAST  : std_logic;
     signal rising_edge_BTN_NORTH : std_logic;
-    signal set_freq			     : std_logic;
-    signal set_PWM	             : std_logic;
+    signal set_freq	             : std_logic;
+    signal set_PWM               : std_logic;
 
     shared variable actual_prescaler_freq : INTEGER;
     shared variable actual_prescaler_PWM  : INTEGER;
