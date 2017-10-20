@@ -28,77 +28,77 @@ architecture Behavioral of main is
 begin
 
 
-button_proc: process ( CLK_50MHz )
-    variable button_counter   : INTEGER := 0;
-    constant button_prescaler : INTEGER := 1_000_000; -- TODO change it to sth reasonable
-begin
-    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        button_counter := button_counter + 1;
-        if button_counter = button_prescaler then
-            button_counter := 0;
-            if BTN_WEST = '1' and resolution > 2_500 then
-                resolution := resolution - 10;
+    button_proc: process ( CLK_50MHz )
+        variable button_counter   : INTEGER := 0;
+        constant button_prescaler : INTEGER := 1_000_000; -- TODO change it to sth reasonable
+    begin
+        if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
+            button_counter := button_counter + 1;
+            if button_counter = button_prescaler then
+                button_counter := 0;
+                if BTN_WEST = '1' and resolution > 2_500 then
+                    resolution := resolution - 10;
+                end if;
+                if BTN_EAST = '1' and resolution < 10_000 then
+                    resolution := resolution + 10;
+                end if;
+                if BTN_NORTH = '1' and duty_cycle < 128 then
+                    duty_cycle := duty_cycle + 1;
+                end if;
+                if BTN_SOUTH = '1' and duty_cycle > 0 then
+                    duty_cycle := duty_cycle - 1;
+                end if;
             end if;
-            if BTN_EAST = '1' and resolution < 10_000 then
-                resolution := resolution + 10;
+        end if;
+    end process button_proc;
+
+
+    dir_break_proc: process ( CLK_50MHz )
+    begin
+        if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
+            Dir <= Switch(0);
+            Break <= Switch(1);
+        end if;
+    end process dir_break_proc;
+
+
+    PWM_proc: process ( CLK_50MHz )
+        variable counter_PWM : INTEGER := 0;
+    begin
+        if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
+            counter_PWM := counter_PWM + 1;
+            if counter_PWM > duty_cycle * resolution / 128 then
+                PWM <= '0';
             end if;
-            if BTN_NORTH = '1' and duty_cycle < 128 then
-                duty_cycle := duty_cycle + 1;
-            end if;
-            if BTN_SOUTH = '1' and duty_cycle > 0 then
-                duty_cycle := duty_cycle - 1;
+            if counter_PWM = resolution then
+                counter_PWM := 0;
+                PWM <= '1';
             end if;
         end if;
-    end if;
-end process button_proc;
+    end process PWM_proc;
 
 
-dir_break_proc: process ( CLK_50MHz )
-begin
-    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        Dir <= Switch(0);
-        Break <= Switch(1);
-    end if;
-end process dir_break_proc;
-
-
-PWM_proc: process ( CLK_50MHz )
-    variable counter_PWM : INTEGER := 0;
-begin
-    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        counter_PWM := counter_PWM + 1;
-        if counter_PWM > duty_cycle * resolution / 128 then
-            PWM <= '0';
+    enkoder: process ( CLK_50MHZ )
+        variable set_point : INTEGER := 0;
+        variable point : INTEGER := 0;
+    begin
+        if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
+            Old_Enc1_A <= Enc1_A;
+            Old_Enc2_A <= Enc2_A;
+            Old_Enc1_B <= Enc1_B;
+            Old_Enc2_B <= Enc2_B;
+            if (((Enc1_A xor Old_Enc1_A)or(Enc1_B xor Old_Enc1_B))='1' and (Old_Enc1_A xor Enc1_B)='1') then
+                set_point := set_point - 1;
+            elsif (((Enc1_A xor Old_Enc1_A)or(Enc1_B xor Old_Enc1_B))='1' and (Old_Enc1_A xor Enc1_B)='0') then
+                set_point := set_point + 1;
+            end if;
+            if (((Enc2_A xor Old_Enc2_A)or(Enc2_B xor Old_Enc2_B))='1' and (Old_Enc2_A xor Enc2_B)='0') then
+                point := point + 1;
+            elsif (((Enc2_A xor Old_Enc2_A)or(Enc2_B xor Old_Enc2_B))='1' and (Old_Enc2_A xor Enc2_B)='1') then
+                point := point - 1;
+            end if;
         end if;
-        if counter_PWM = resolution then
-            counter_PWM := 0;
-            PWM <= '1';
-        end if;
-    end if;
-end process PWM_proc;
-
-
-enkoder: process ( CLK_50MHZ )
-    variable set_point : INTEGER := 0;
-    variable point : INTEGER := 0;
-begin
-    if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-        Old_Enc1_A <= Enc1_A;
-        Old_Enc2_A <= Enc2_A;
-        Old_Enc1_B <= Enc1_B;
-        Old_Enc2_B <= Enc2_B;
-        if (((Enc1_A xor Old_Enc1_A)or(Enc1_B xor Old_Enc1_B))='1' and (Old_Enc1_A xor Enc1_B)='1') then
-            set_point := set_point - 1;
-        elsif (((Enc1_A xor Old_Enc1_A)or(Enc1_B xor Old_Enc1_B))='1' and (Old_Enc1_A xor Enc1_B)='0') then
-            set_point := set_point + 1;
-        end if;
-        if (((Enc2_A xor Old_Enc2_A)or(Enc2_B xor Old_Enc2_B))='1' and (Old_Enc2_A xor Enc2_B)='0') then
-            point := point + 1;
-        elsif (((Enc2_A xor Old_Enc2_A)or(Enc2_B xor Old_Enc2_B))='1' and (Old_Enc2_A xor Enc2_B)='1') then
-            point := point - 1;
-        end if;
-    end if;
-end process enkoder;
+    end process enkoder;
 
 
 end Behavioral;
