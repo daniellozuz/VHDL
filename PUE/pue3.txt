@@ -66,24 +66,24 @@ begin
 
 
     enkoder_proc: process ( CLK_50MHz )
-        variable prev__Enc1_A : STD_LOGIC := '0';
-        variable prev__Enc1_B : STD_LOGIC := '0';
-        variable prev__Enc2_A : STD_LOGIC := '0';
-        variable prev__Enc2_B : STD_LOGIC := '0';
+        variable prev_Enc1_A : STD_LOGIC := '0';
+        variable prev_Enc1_B : STD_LOGIC := '0';
+        variable prev_Enc2_A : STD_LOGIC := '0';
+        variable prev_Enc2_B : STD_LOGIC := '0';
     begin
         if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-            prev__Enc1_A <= Enc1_A;
-            prev__Enc2_A <= Enc2_A;
-            prev__Enc1_B <= Enc1_B;
-            prev__Enc2_B <= Enc2_B;
-            if (((Enc1_A xor prev__Enc1_A)or(Enc1_B xor prev__Enc1_B))='1' and (prev__Enc1_A xor Enc1_B)='1') then
+            prev_Enc1_A := Enc1_A;
+            prev_Enc2_A := Enc2_A;
+            prev_Enc1_B := Enc1_B;
+            prev_Enc2_B := Enc2_B;
+            if ((( Enc1_A xor prev_Enc1_A ) or ( Enc1_B xor prev_Enc1_B )) = '1' and ( prev_Enc1_A xor Enc1_B ) = '1') then
                 set_point <= set_point - 1;
-            elsif (((Enc1_A xor prev__Enc1_A)or(Enc1_B xor prev__Enc1_B))='1' and (prev__Enc1_A xor Enc1_B)='0') then
+            elsif ((( Enc1_A xor prev_Enc1_A ) or ( Enc1_B xor prev_Enc1_B )) = '1' and ( prev_Enc1_A xor Enc1_B ) = '0') then
                 set_point <= set_point + 1;
             end if;
-            if (((Enc2_A xor prev__Enc2_A)or(Enc2_B xor prev__Enc2_B))='1' and (prev__Enc2_A xor Enc2_B)='0') then
+            if ((( Enc2_A xor prev_Enc2_A ) or ( Enc2_B xor prev_Enc2_B )) = '1' and ( prev_Enc2_A xor Enc2_B ) = '0') then
                 point <= point + 1;
-            elsif (((Enc2_A xor prev__Enc2_A)or(Enc2_B xor prev__Enc2_B))='1' and (prev__Enc2_A xor Enc2_B)='1') then
+            elsif ((( Enc2_A xor prev_Enc2_A ) or ( Enc2_B xor prev_Enc2_B )) = '1' and ( prev_Enc2_A xor Enc2_B ) = '1') then
                 point <= point - 1;
             end if;
         end if;
@@ -111,14 +111,14 @@ begin
     P_controller_proc: process ( CLK_50MHz )
         variable k : INTEGER := 16;
     begin
-        duty_cycle := ( set_point - point ) / k;
+        duty_cycle <= ( set_point - point ) / k;
         if duty_cycle < 0 then
             duty_cycle <= -duty_cycle;
         end if;
         if duty_cycle > 128 then
             duty_cycle <= 128;
         end if;
-    end P_controller_proc;
+    end process P_controller_proc;
 
 
 end Behavioral;
