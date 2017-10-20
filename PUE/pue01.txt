@@ -12,10 +12,10 @@ entity main is
            Enc1_B    : in STD_LOGIC;
            Enc2_A    : in STD_LOGIC;
            Enc2_B    : in STD_LOGIC;
-           BTN_EAST  : inout STD_LOGIC;
-           BTN_NORTH : inout STD_LOGIC; -- increase 
-           BTN_SOUTH : inout STD_LOGIC;
-           BTN_WEST  : inout STD_LOGIC;
+           BTN_NORTH : inout STD_LOGIC; -- increase PWM duty cycle
+           BTN_SOUTH : inout STD_LOGIC; -- decrease PWM duty cycle
+           BTN_EAST  : inout STD_LOGIC; -- increase PWM frequency
+           BTN_WEST  : inout STD_LOGIC; -- decrease PWM frequency
            Dir       : out STD_LOGIC;
            Break     : out STD_LOGIC;
            PWM       : out STD_LOGIC );
@@ -23,20 +23,6 @@ end main;
 
 
 architecture Behavioral of main is
-    type integers is array ( NATURAL range <> ) of INTEGER;
-
-    constant FREQUENCY_PRESCALERS : integers ( 0 to 3 ) := ( 2_500, 3_300, 5_000, 10_000 );
-    constant RESOLUTION_PRESCALERS : integers ( 0 to 3 ) := ( 9, 10, 11, 12 );
-
-    signal prev_BTN_EAST         : std_logic;
-    signal prev_BTN_NORTH        : std_logic;
-    signal prev_BTN_SOUTH        : std_logic;
-    signal prev_BTN_WEST	     : std_logic;
-    signal rising_edge_BTN_EAST  : std_logic;
-    signal rising_edge_BTN_NORTH : std_logic;
-    signal set_freq              : std_logic;
-    signal set_PWM               : std_logic;
-
     shared variable prescaler_freq : INTEGER := 10_000;
     shared variable duty_cycle     : INTEGER := 0;
 begin
