@@ -23,8 +23,8 @@ end main;
 
 
 architecture Behavioral of main is
-    shared variable prescaler_freq : INTEGER := 10_000;
-    shared variable duty_cycle     : INTEGER := 0;
+    shared variable resolution : INTEGER := 10_000;
+    shared variable duty_cycle : INTEGER := 0;
 begin
 
 
@@ -36,11 +36,11 @@ begin
         button_counter := button_counter + 1;
         if button_counter = button_prescaler then
             button_counter := 0;
-            if BTN_WEST = '1' and prescaler_freq > 2_500 then
-                prescaler_freq := prescaler_freq - 10;
+            if BTN_WEST = '1' and resolution > 2_500 then
+                resolution := resolution - 10;
             end if;
-            if BTN_EAST = '1' and prescaler_freq < 10_000 then
-                prescaler_freq := prescaler_freq + 10;
+            if BTN_EAST = '1' and resolution < 10_000 then
+                resolution := resolution + 10;
             end if;
             if BTN_NORTH = '1' and duty_cycle < 128 then
                 duty_cycle := duty_cycle + 1;
@@ -67,10 +67,10 @@ PWM_proc: process ( CLK_50MHz )
 begin
     if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
         counter_PWM := counter_PWM + 1;
-        if counter_PWM > duty_cycle * prescaler_freq / 128 then
-            PWM <= 0;
+        if counter_PWM > duty_cycle * resolution / 128 then
+            PWM <= '0';
         end if;
-        if counter_PWM = prescaler_PWM then
+        if counter_PWM = resolution then
             counter_PWM := 0;
             PWM <= '1';
         end if;
