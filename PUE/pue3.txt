@@ -109,7 +109,7 @@ begin
 
 
     P_controller_proc: process ( CLK_50MHz )
-        variable k : INTEGER := 16;
+        constant k : INTEGER := 16;
     begin
         duty_cycle <= ( set_point - point ) / k;
         if duty_cycle < 0 then
