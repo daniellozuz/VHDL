@@ -5,57 +5,66 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity main is
-    Port (  CLK_50MHz : in STD_LOGIC;
-            Switch    : in STD_LOGIC_VECTOR ( 3 downto 0 );
-            LED       : out STD_LOGIC_VECTOR ( 7 downto 0 );
-            Enc1_A    : in STD_LOGIC;
-            Enc1_B    : in STD_LOGIC;
-            Enc2_A    : in STD_LOGIC;
-            Enc2_B    : in STD_LOGIC;
-            BTN_EAST  : inout STD_LOGIC;
-            BTN_NORTH : inout STD_LOGIC;
-            BTN_SOUTH : inout STD_LOGIC;
-            BTN_WEST  : inout STD_LOGIC;
-            Dir       : out STD_LOGIC;
-            Break     : out STD_LOGIC;
-            PWM       : out STD_LOGIC );
+    Port ( CLK_50MHz : in STD_LOGIC;
+           Switch    : in STD_LOGIC_VECTOR ( 3 downto 0 );
+           LED       : out STD_LOGIC_VECTOR ( 7 downto 0 );
+           Enc1_A    : in STD_LOGIC;
+           Enc1_B    : in STD_LOGIC;
+           Enc2_A    : in STD_LOGIC;
+           Enc2_B    : in STD_LOGIC;
+           BTN_EAST  : inout STD_LOGIC;
+           BTN_NORTH : inout STD_LOGIC; -- increase 
+           BTN_SOUTH : inout STD_LOGIC;
+           BTN_WEST  : inout STD_LOGIC;
+           Dir       : out STD_LOGIC;
+           Break     : out STD_LOGIC;
+           PWM       : out STD_LOGIC );
 end main;
 
 
 architecture Behavioral of main is
-    signal old_BTN_EAST          : std_logic;
-    signal old_BTN_NORTH         : std_logic;
-    signal old_BTN_SOUTH         : std_logic;
-    signal old_BTN_WEST	         : std_logic;
+    type integers is array ( NATURAL range <> ) of INTEGER;
+
+    constant FREQUENCY_PRESCALERS : integers ( 0 to 3 ) := ( 2_500, 3_300, 5_000, 10_000 );
+    constant RESOLUTION_PRESCALERS : integers ( 0 to 3 ) := ( 9, 10, 11, 12 );
+
+    signal prev_BTN_EAST         : std_logic;
+    signal prev_BTN_NORTH        : std_logic;
+    signal prev_BTN_SOUTH        : std_logic;
+    signal prev_BTN_WEST	     : std_logic;
     signal rising_edge_BTN_EAST  : std_logic;
     signal rising_edge_BTN_NORTH : std_logic;
     signal set_freq              : std_logic;
     signal set_PWM               : std_logic;
 
-    shared variable actual_prescaler_freq : INTEGER;
-    shared variable actual_prescaler_PWM  : INTEGER;
-    shared variable new_prescaler_freq    : INTEGER := 10000;
-    shared variable new_prescaler_PWM     : INTEGER := 2;
+    shared variable prescaler_freq : INTEGER := 10_000;
+    shared variable duty_cycle     : INTEGER := 0;
 begin
 
 
-edge_detection_proc: process ( CLK_50MHz )
+button_proc: process ( CLK_50MHz )
+    variable button_counter   : INTEGER := 0;
+    constant button_prescaler : INTEGER := 1_000_000; -- TODO change it to sth reasonable
 begin
     if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        if ( BTN_EAST = '1' and old_BTN_EAST = '0' ) then
-            rising_edge_BTN_EAST <= '1';
-        else
-            rising_edge_BTN_EAST <= '0';
+        button_counter := button_counter + 1;
+        if button_counter = button_prescaler then
+            button_counter := 0;
+            if BTN_WEST = '1' and prescaler_freq > 2_500 then
+                prescaler_freq := prescaler_freq - 10;
+            end if;
+            if BTN_EAST = '1' and prescaler_freq < 10_000 then
+                prescaler_freq := prescaler_freq + 10;
+            end if;
+            if BTN_NORTH = '1' and duty_cycle < 128 then
+                duty_cycle := duty_cycle + 1;
+            end if;
+            if BTN_SOUTH = '1' and duty_cycle > 0 then
+                duty_cycle := duty_cycle - 1;
+            end if;
         end if;
-        if ( BTN_NORTH = '1' and old_BTN_NORTH = '0' ) then
-            rising_edge_BTN_NORTH <= '1';
-        else
-            rising_edge_BTN_NORTH <= '0';
-        end if;
-        old_BTN_EAST <= BTN_EAST;
-        old_BTN_NORTH <= BTN_NORTH;
     end if;
-end process edge_detection_proc;
+end process button_proc;
 
 
 dir_break_proc: process ( CLK_50MHz )
@@ -67,112 +76,20 @@ begin
 end process dir_break_proc;
 
 
--- Przykladowy proces umozliwiajacy kompilacje projektu
-LED_proc: process ( CLK_50MHz )
-begin
-    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        LED <= Switch & Switch;
-    end if;
-end process LED_proc;
-
-
-prescaler_proc: process ( CLK_50MHz )
-begin
-    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        case Switch( 3 downto 2 ) is
-            when "00" =>
-                new_prescaler_freq := 10000;
-                new_prescaler_PWM := 2;
-            when "01" =>
-                new_prescaler_freq := 5000;
-                new_prescaler_PWM := 4;
-            when "10" =>
-                new_prescaler_freq := 3500;
-                new_prescaler_PWM := 6;
-            when others =>
-                new_prescaler_freq := 2500;
-                new_prescaler_PWM := 8;
-        end case;
-    end if;
-end process prescaler_proc;
-
-
 PWM_proc: process ( CLK_50MHz )
     variable counter_PWM : INTEGER := 0;
 begin
     if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
         counter_PWM := counter_PWM + 1;
-        if counter_PWM = 1 then
-            PWM <= '1';
+        if counter_PWM > duty_cycle * prescaler_freq / 128 then
+            PWM <= 0;
         end if;
-        if counter_PWM = actual_prescaler_freq * 100 / actual_prescaler_PWM then
-            PWM <= '0';
-        end if;
-        if counter_PWM = actual_prescaler_freq then
-            PWM <= '1';
+        if counter_PWM = prescaler_PWM then
             counter_PWM := 0;
+            PWM <= '1';
         end if;
     end if;
 end process PWM_proc;
-
-
-change_presc_proc: process ( CLK_50MHz )
-    variable counter_freq_change : INTEGER;
-    variable counter_PWM_change  : INTEGER;
-begin
-    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
-        old_BTN_SOUTH <= BTN_SOUTH;
-        if ( BTN_SOUTH = '1' and old_BTN_SOUTH = '0' ) then
-            set_freq <= '1';
-        end if;
-        old_BTN_WEST <= BTN_WEST;
-        if ( BTN_WEST = '1' and old_BTN_WEST = '0' ) then
-            set_PWM <= '1';
-        end if;
-        if set_freq = '1' then
-            if actual_prescaler_freq < new_prescaler_freq then
-                counter_freq_change := counter_freq_change + 1;
-                if counter_freq_change = 1 then
-                    actual_prescaler_freq := actual_prescaler_freq + 500;
-                end if;
-                if counter_freq_change = 50000000 then
-                    counter_freq_change := 0;
-                end if;
-            elsif actual_prescaler_freq > new_prescaler_freq then
-                counter_freq_change := counter_freq_change + 1;
-                if counter_freq_change = 1 then
-                    actual_prescaler_freq := actual_prescaler_freq - 500;
-                end if;
-                if counter_freq_change = 50000000 then
-                    counter_freq_change := 0;
-                end if;
-            else
-                set_freq <= '0';
-            end if;
-        end if;
-        if ( set_PWM = '1' and set_freq = '0' ) then
-            if actual_prescaler_PWM < new_prescaler_PWM then
-                counter_PWM_change := counter_PWM_change + 1;
-                if counter_PWM_change = 1 then
-                    actual_prescaler_PWM := actual_prescaler_PWM + 2;
-                end if;
-                if counter_PWM_change = 50000000 then
-                    counter_PWM_change := 0;
-                end if;
-            elsif actual_prescaler_PWM > new_prescaler_PWM then
-                counter_PWM_change := counter_PWM_change + 1;
-                if counter_PWM_change = 1 then
-                    actual_prescaler_PWM := actual_prescaler_PWM - 2;
-                end if;
-                if counter_PWM_change = 50000000 then
-                    counter_PWM_change := 0;
-                end if;
-            else
-                set_freq <= '0';
-            end if;
-        end if;
-    end if;
-end process change_presc_proc;
 
 
 end Behavioral;
