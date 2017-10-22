@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
+use ieee.numeric_std.all;
 
 entity main is
     Port ( CLK_50MHz : in STD_LOGIC;
@@ -32,7 +32,7 @@ begin
 
     button_proc: process ( CLK_50MHz )
         variable button_counter   : INTEGER := 0;
-        constant button_prescaler : INTEGER := 1_000_000; -- TODO change it to sth reasonable
+        constant button_prescaler : INTEGER := 1_000_000;
     begin
         if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
             button_counter := button_counter + 1;
@@ -72,13 +72,9 @@ begin
         variable prev_Enc2_B : STD_LOGIC := '0';
     begin
         if ( CLK_50MHZ = '1' and CLK_50MHZ'event ) then
-            prev_Enc1_A := Enc1_A;
-            prev_Enc2_A := Enc2_A;
-            prev_Enc1_B := Enc1_B;
-            prev_Enc2_B := Enc2_B;
-            if ((( Enc1_A xor prev_Enc1_A ) or ( Enc1_B xor prev_Enc1_B )) = '1' and ( prev_Enc1_A xor Enc1_B ) = '1') then
+            if (((( Enc1_A xor prev_Enc1_A ) or ( Enc1_B xor prev_Enc1_B )) = '1') and (( prev_Enc1_A xor Enc1_B ) = '1')) then
                 set_point <= set_point - 1;
-            elsif ((( Enc1_A xor prev_Enc1_A ) or ( Enc1_B xor prev_Enc1_B )) = '1' and ( prev_Enc1_A xor Enc1_B ) = '0') then
+            elsif (((( Enc1_A xor prev_Enc1_A ) or ( Enc1_B xor prev_Enc1_B )) = '1') and ( (prev_Enc1_A xor Enc1_B ) = '0')) then
                 set_point <= set_point + 1;
             end if;
             if ((( Enc2_A xor prev_Enc2_A ) or ( Enc2_B xor prev_Enc2_B )) = '1' and ( prev_Enc2_A xor Enc2_B ) = '0') then
@@ -86,6 +82,10 @@ begin
             elsif ((( Enc2_A xor prev_Enc2_A ) or ( Enc2_B xor prev_Enc2_B )) = '1' and ( prev_Enc2_A xor Enc2_B ) = '1') then
                 point <= point - 1;
             end if;
+				prev_Enc1_A := Enc1_A;
+            prev_Enc2_A := Enc2_A;
+            prev_Enc1_B := Enc1_B;
+            prev_Enc2_B := Enc2_B;
         end if;
     end process enkoder_proc;
 
@@ -100,24 +100,31 @@ begin
 
     direction_proc: process ( CLK_50MHz )
     begin
-        if set_point > point then
-            Dir <= '1';
-        else
-            Dir <= '0';
-        end if;
+	    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
+            if set_point > point then
+                Dir <= '1';
+            else
+                Dir <= '0';			
+            end if;
+	    end if;
     end process direction_proc;
 
 
     P_controller_proc: process ( CLK_50MHz )
-        constant k : INTEGER := 16;
+        constant k : INTEGER := 512;
+		variable temp_duty_cycle : INTEGER := 0;
     begin
-        duty_cycle <= ( set_point - point ) / k;
-        if duty_cycle < 0 then
-            duty_cycle <= -duty_cycle;
-        end if;
-        if duty_cycle > 128 then
-            duty_cycle <= 128;
-        end if;
+	    if ( CLK_50MHz = '1' and CLK_50MHz'event ) then
+            temp_duty_cycle :=abs( set_point - point ) / k;
+			if temp_duty_cycle > 128 then
+                temp_duty_cycle := 10;
+            end if;
+			if temp_duty_cycle <10  then
+                temp_duty_cycle := 0;
+            end if;
+			duty_cycle <= temp_duty_cycle;
+			LED <= std_logic_vector ( to_unsigned ( abs ( set_point - point ) / k, LED'length ) );
+	    end if;
     end process P_controller_proc;
 
 
